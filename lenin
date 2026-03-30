@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeninTrader NQ · Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080b0f;--bg2:#0e1318;--bg3:#151c24;--bg4:#1c242e;
+  --border:#1e2830;--border2:#263040;
+  --text:#dde3ea;--muted:#4a5a6a;--dim:#6b7e8f;
+  --green:#00e676;--red:#ff4466;--amber:#ffb300;--blue:#40c8f4;--purple:#c084fc;
+  --long:#00c853;--short:#ff1744;--hold:#ff8f00;
+  --r:5px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* Header */
+#hdr{
+  height:50px;background:var(--bg2);border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;gap:16px;padding:0 16px;
+  position:relative;z-index:10;
+}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--amber);letter-spacing:-0.5px;white-space:nowrap;}
+.logo b{color:var(--text);}
+#nq-price{font-size:20px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;letter-spacing:-0.5px;}
+#nq-chg{font-size:11px;color:var(--muted);}
+#sess-badge{
+  padding:3px 9px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px;
+  border:1px solid;white-space:nowrap;
+}
+.s-open{background:rgba(0,230,118,.1);color:var(--green);border-color:var(--green);}
+.s-closed{background:rgba(255,68,102,.1);color:var(--red);border-color:var(--red);}
+.s-pre{background:rgba(255,179,0,.1);color:var(--amber);border-color:var(--amber);}
+#ny-time{font-size:10px;color:var(--dim);}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.icon-btn{
+  background:transparent;border:1px solid var(--border2);color:var(--muted);
+  border-radius:var(--r);padding:5px 10px;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;
+  transition:all .15s;
+}
+.icon-btn:hover{border-color:var(--amber);color:var(--amber);}
+
+/* Layout */
+#layout{display:grid;grid-template-columns:272px 1fr;height:calc(100vh - 50px);}
+
+/* Sidebar */
+#sidebar{
+  background:var(--bg2);border-right:1px solid var(--border);
+  overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px;
+}
+.sec-title{
+  font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted);
+  text-transform:uppercase;padding-bottom:6px;border-bottom:1px solid var(--border);
+  margin-bottom:6px;
+}
+.field{display:flex;flex-direction:column;gap:3px;}
+.field label{font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;}
+.field input,.field select,.field textarea{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);
+  color:var(--text);padding:6px 9px;font-family:'Space Mono',monospace;font-size:11px;
+  width:100%;outline:none;transition:border-color .2s;
+}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--amber);}
+.field textarea{resize:none;height:52px;}
+select option{background:var(--bg3);}
+
+/* Timeframe bias */
+.tf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.tf-row{display:flex;flex-direction:column;gap:3px;}
+.tf-row .lbl{font-size:9px;color:var(--dim);letter-spacing:1px;}
+.bias-btns{display:flex;gap:3px;}
+.bb{
+  flex:1;padding:4px 2px;border:1px solid var(--border2);border-radius:3px;
+  background:var(--bg3);color:var(--muted);font-family:'Space Mono',monospace;
+  font-size:9px;cursor:pointer;text-align:center;letter-spacing:.5px;transition:all .15s;
+}
+.bb:hover{border-color:var(--border2);color:var(--text);}
+.bb.bull{background:rgba(0,230,118,.12);color:var(--green);border-color:var(--green);}
+.bb.bear{background:rgba(255,68,102,.12);color:var(--red);border-color:var(--red);}
+.bb.neu{background:rgba(255,179,0,.08);color:var(--amber);border-color:var(--amber);}
+
+/* Analyze button */
+#btn-analyze{
+  width:100%;padding:11px;background:var(--amber);color:#000;
+  border:none;border-radius:var(--r);
+  font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:.5px;
+  cursor:pointer;transition:all .2s;
+}
+#btn-analyze:hover:not(:disabled){background:#ffc107;box-shadow:0 0 20px rgba(255,179,0,.3);}
+#btn-analyze:disabled{background:var(--border2);color:var(--muted);cursor:not-allowed;}
+
+/* Vol visualizer */
+.vol-preview{display:flex;gap:2px;align-items:flex-end;height:28px;margin-top:4px;}
+.vb{border-radius:1px 1px 0 0;transition:height .3s;}
+.vb.u{background:var(--green);}
+.vb.d{background:var(--red);}
+
+/* Content */
+#content{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;}
+
+/* Decision hero */
+#dec-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:16px 20px;display:flex;align-items:center;gap:24px;min-height:80px;
+}
+#dec-signal{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:42px;
+  letter-spacing:-2px;min-width:130px;
+  text-shadow:0 0 30px currentColor;
+  transition:color .3s;
+}
+#dec-signal.LONG{color:var(--long);}
+#dec-signal.SHORT{color:var(--short);}
+#dec-signal.HOLD{color:var(--hold);}
+#dec-signal.WAIT{color:var(--muted);}
+.risk-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0;flex:1;}
+.ri{display:flex;flex-direction:column;gap:3px;padding:0 16px;border-right:1px solid var(--border);}
+.ri:first-child{padding-left:0;}
+.ri:last-child{border-right:none;}
+.rl{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+.rv{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;}
+.rv.g{color:var(--long);}
+.rv.r{color:var(--short);}
+.rv.a{color:var(--amber);}
+#conf-badge{
+  padding:3px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:1px;
+  border:1px solid var(--muted);color:var(--muted);
+}
+#conf-badge.ALTA{border-color:var(--green);color:var(--green);background:rgba(0,230,118,.1);}
+#conf-badge.MEDIA{border-color:var(--amber);color:var(--amber);background:rgba(255,179,0,.1);}
+#conf-badge.BAJA{border-color:var(--red);color:var(--red);background:rgba(255,68,102,.1);}
+
+/* Agents grid */
+.agents-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.ag-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;transition:border-color .3s;
+}
+.ag-card.thinking{border-color:var(--amber);}
+.ag-card.bull{border-color:rgba(0,230,118,.4);}
+.ag-card.bear{border-color:rgba(255,68,102,.4);}
+.ag-card.neu{border-color:var(--border2);}
+.ag-hdr{
+  padding:7px 12px;background:var(--bg3);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.ag-id{font-size:9px;color:var(--amber);font-weight:700;letter-spacing:1.5px;}
+.ag-name{font-size:10px;color:var(--dim);}
+.ag-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:background .3s;}
+.ag-dot.thinking{background:var(--amber);animation:pulse 1s infinite;}
+.ag-dot.bull{background:var(--green);}
+.ag-dot.bear{background:var(--red);}
+.ag-dot.neu{background:var(--muted);}
+.ag-body{padding:10px 12px;min-height:88px;font-size:11px;line-height:1.7;color:var(--muted);}
+.ag-body.ready{color:var(--text);}
+
+/* Bottom row */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.panel-hdr{
+  padding:7px 12px;background:var(--bg3);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.panel-title{font-size:9px;color:var(--muted);font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+.panel-body{padding:10px 12px;}
+
+/* Telegram */
+#tg-preview{
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);
+  padding:10px;font-size:10px;line-height:1.8;color:var(--dim);
+  min-height:80px;white-space:pre-wrap;margin-bottom:10px;
+}
+#tg-preview.ready{color:var(--text);}
+#btn-tg{
+  width:100%;padding:8px;
+  background:rgba(64,200,244,.08);border:1px solid rgba(64,200,244,.3);color:var(--blue);
+  border-radius:var(--r);font-family:'Space Mono',monospace;font-size:11px;
+  cursor:pointer;transition:all .2s;
+}
+#btn-tg:hover:not(:disabled){background:rgba(64,200,244,.15);}
+#btn-tg:disabled{opacity:.35;cursor:not-allowed;}
+
+/* Log */
+#log-body{overflow-y:auto;max-height:160px;}
+.log-row{
+  display:grid;grid-template-columns:70px 50px 90px 90px 90px 1fr;
+  gap:0;padding:6px 12px;border-bottom:1px solid var(--border);
+  font-size:10px;align-items:center;
+}
+.log-row:last-child{border-bottom:none;}
+.log-hdr{background:var(--bg3);color:var(--muted);font-size:9px;letter-spacing:1px;}
+.tag{padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;}
+.tag.L{background:rgba(0,200,83,.15);color:var(--long);}
+.tag.S{background:rgba(255,23,68,.15);color:var(--short);}
+.tag.H{background:rgba(255,143,0,.15);color:var(--hold);}
+.log-empty{padding:20px 12px;color:var(--muted);font-size:11px;text-align:center;}
+
+/* Modal */
+#modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;
+  display:none;align-items:center;justify-content:center;
+}
+#modal.open{display:flex;}
+.modal-box{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+  padding:24px;width:380px;display:flex;flex-direction:column;gap:14px;
+}
+.modal-box h3{font-family:'Syne',sans-serif;font-size:15px;color:var(--amber);}
+.modal-box p{font-size:11px;color:var(--dim);line-height:1.6;}
+.modal-btns{display:flex;gap:8px;margin-top:4px;}
+.btn-save{
+  flex:1;padding:9px;background:var(--amber);color:#000;border:none;
+  border-radius:var(--r);font-family:'Space Mono',monospace;font-size:12px;
+  font-weight:700;cursor:pointer;
+}
+.btn-cancel{
+  padding:9px 16px;background:transparent;border:1px solid var(--border2);
+  color:var(--muted);border-radius:var(--r);font-family:'Space Mono',monospace;
+  font-size:12px;cursor:pointer;
+}
+.btn-cancel:hover{border-color:var(--red);color:var(--red);}
+
+/* Animations */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .3s ease-out;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="hdr">
+  <div class="logo">Lenin<b>Trade</b><span style="color:var(--amber)">R</span> <span style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;font-weight:400;">NQ Terminal</span></div>
+  <div style="display:flex;flex-direction:column;gap:1px;">
+    <span id="nq-price">—</span>
+    <span id="nq-chg">NQ JUN26</span>
+  </div>
+  <div id="sess-badge" class="s-closed">CARGANDO</div>
+  <div id="ny-time">NY —:—</div>
+  <div class="hdr-r">
+    <div id="price-mode" style="font-size:10px;color:var(--muted);cursor:pointer;" title="Click para ingresar precio manual" onclick="togglePriceMode()">⟳ auto</div>
+    <button class="icon-btn" onclick="openModal()">⚙ Config</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div id="layout">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+
+    <div>
+      <div class="sec-title">Indicadores NinjaTrader</div>
+
+      <div style="display:flex;flex-direction:column;gap:9px;">
+
+        <div class="field">
+          <label>VolumenDominanciaF · 5M (últimas 5 velas)</label>
+          <input type="text" id="vol5m" placeholder="293,-145,412,-89,200" oninput="renderVol('vol5m','prev5m')">
+          <div class="vol-preview" id="prev5m"></div>
+        </div>
+
+        <div class="field">
+          <label>VolumenDominanciaF · 1M (últimas 5 velas)</label>
+          <input type="text" id="vol1m" placeholder="120,88,-45,210,-30" oninput="renderVol('vol1m','prev1m')">
+          <div class="vol-preview" id="prev1m"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div class="field">
+            <label>Presión 5M</label>
+            <select id="pres5m">
+              <option value="NEUTRO">— Neutro</option>
+              <option value="COMPRA">▲ Compra</option>
+              <option value="VENTA">▼ Venta</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Presión 1M</label>
+            <select id="pres1m">
+              <option value="NEUTRO">— Neutro</option>
+              <option value="COMPRA">▲ Compra</option>
+              <option value="VENTA">▼ Venta</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-title">Estructura Multi-TF</div>
+      <div class="tf-grid">
+        <div class="tf-row"><div class="lbl">Diario</div><div class="bias-btns"><button class="bb" data-tf="d" data-v="ALCISTA" onclick="setBias(this)">▲ Alc</button><button class="bb" data-tf="d" data-v="BAJISTA" onclick="setBias(this)">▼ Baj</button><button class="bb" data-tf="d" data-v="NEUTRO" onclick="setBias(this)">— Neu</button></div></div>
+        <div class="tf-row"><div class="lbl">7 Horas</div><div class="bias-btns"><button class="bb" data-tf="h7" data-v="ALCISTA" onclick="setBias(this)">▲ Alc</button><button class="bb" data-tf="h7" data-v="BAJISTA" onclick="setBias(this)">▼ Baj</button><button class="bb" data-tf="h7" data-v="NEUTRO" onclick="setBias(this)">— Neu</button></div></div>
+        <div class="tf-row"><div class="lbl">4 Horas</div><div class="bias-btns"><button class="bb" data-tf="h4" data-v="ALCISTA" onclick="setBias(this)">▲ Alc</button><button class="bb" data-tf="h4" data-v="BAJISTA" onclick="setBias(this)">▼ Baj</button><button class="bb" data-tf="h4" data-v="NEUTRO" onclick="setBias(this)">— Neu</button></div></div>
+        <div class="tf-row"><div class="lbl">1 Hora</div><div class="bias-btns"><button class="bb" data-tf="h1" data-v="ALCISTA" onclick="setBias(this)">▲ Alc</button><button class="bb" data-tf="h1" data-v="BAJISTA" onclick="setBias(this)">▼ Baj</button><button class="bb" data-tf="h1" data-v="NEUTRO" onclick="setBias(this)">— Neu</button></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-title">Nivel Blanco (precio objetivo)</div>
+      <div class="field">
+        <label>Precio cierre vela mayor volumen</label>
+        <input type="number" id="precio-manual" placeholder="23217.25" step="0.25">
+      </div>
+      <div class="field">
+        <label>Escenario</label>
+        <select id="escenario">
+          <option value="1">Escenario 1 — Mínimo con volumen alto (manipulación clara)</option>
+          <option value="2">Escenario 2 — No lleva mínimo, rebote, esperar 2da manipulación</option>
+          <option value="3">Escenario 3 — Volumen pre-market no testeado en sesión</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tipo de entrada SHORT</label>
+        <select id="tipo-short">
+          <option value="na">N/A (entrada LONG)</option>
+          <option value="arriba">2da manipulación ARRIBA estructura (92%)</option>
+          <option value="premkt">2da manipulación desde pre-market (54%)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Vol. pre-market no testeado (nivel)</label>
+        <input type="number" id="vol-premkt" placeholder="23100.50" step="0.25">
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-title">Contexto adicional</div>
+      <div class="field">
+        <label>Notas / niveles clave</label>
+        <textarea id="notas" placeholder="Nivel de resistencia en 23,450&#10;Soporte en 23,150..."></textarea>
+      </div>
+    </div>
+
+    <button id="btn-analyze" onclick="runAnalysis()">▶ ANALIZAR</button>
+
+    <div style="text-align:center;font-size:9px;color:var(--muted);padding-top:4px;">
+      Capital: $50,000 · Riesgo: 2% = $1,000/trade · NQ Full
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- DECISION HERO -->
+    <div id="dec-card">
+      <div id="dec-signal" class="WAIT">WAIT</div>
+      <div class="risk-grid">
+        <div class="ri"><div class="rl">Entrada</div><div class="rv" id="rv-entry">—</div></div>
+        <div class="ri"><div class="rl">Stop Loss</div><div class="rv r" id="rv-sl">—</div></div>
+        <div class="ri"><div class="rl">Take Profit</div><div class="rv g" id="rv-tp">—</div></div>
+        <div class="ri"><div class="rl">Contratos</div><div class="rv a" id="rv-contr">—</div></div>
+        <div class="ri">
+          <div class="rl">Riesgo</div>
+          <div class="rv r" id="rv-risk">—</div>
+          <div style="font-size:9px;color:var(--muted)" id="rv-risk-pct">—% capital</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <div id="conf-badge">—</div>
+        <div id="rr-badge" style="font-size:10px;font-weight:700;color:var(--amber);">RR 1:1</div>
+        <div style="font-size:9px;color:var(--muted)">Ganancia</div>
+        <div style="font-size:13px;font-weight:700;color:var(--green)" id="rv-gain">—</div>
+        <div style="font-size:9px;color:var(--muted)" id="rv-gain-pct">—% capital</div>
+      </div>
+    </div>
+
+    <!-- AGENTS -->
+    <div class="agents-grid">
+      <div class="ag-card" id="card-ag1">
+        <div class="ag-hdr"><span class="ag-id">AG1</span><span class="ag-name">Sesión NY</span><div class="ag-dot" id="dot-ag1"></div></div>
+        <div class="ag-body" id="out-ag1">Esperando análisis...</div>
+      </div>
+      <div class="ag-card" id="card-ag2">
+        <div class="ag-hdr"><span class="ag-id">AG2</span><span class="ag-name">Estructura</span><div class="ag-dot" id="dot-ag2"></div></div>
+        <div class="ag-body" id="out-ag2">Esperando análisis...</div>
+      </div>
+      <div class="ag-card" id="card-ag3">
+        <div class="ag-hdr"><span class="ag-id">AG3</span><span class="ag-name">Volumen Up/Down</span><div class="ag-dot" id="dot-ag3"></div></div>
+        <div class="ag-body" id="out-ag3">Esperando análisis...</div>
+      </div>
+      <div class="ag-card" id="card-ag4">
+        <div class="ag-hdr"><span class="ag-id">AG4</span><span class="ag-name">Decisión</span><div class="ag-dot" id="dot-ag4"></div></div>
+        <div class="ag-body" id="out-ag4">Esperando AG1+AG2+AG3...</div>
+      </div>
+      <div class="ag-card" id="card-ag5">
+        <div class="ag-hdr"><span class="ag-id">AG5</span><span class="ag-name">Gestión Riesgo</span><div class="ag-dot" id="dot-ag5"></div></div>
+        <div class="ag-body" id="out-ag5">Esperando decisión...</div>
+      </div>
+      <div class="ag-card" id="card-ag6">
+        <div class="ag-hdr"><span class="ag-id">AG6</span><span class="ag-name">Alerta</span><div class="ag-dot" id="dot-ag6"></div></div>
+        <div class="ag-body" id="out-ag6">Esperando setup completo...</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="bottom-row">
+
+      <!-- Telegram -->
+      <div class="panel">
+        <div class="panel-hdr">
+          <span class="panel-title">Telegram · Lenintrader Bot</span>
+          <span id="tg-status" style="font-size:9px;color:var(--muted);">—</span>
+        </div>
+        <div class="panel-body">
+          <div id="tg-preview">El mensaje de alerta aparecerá aquí una vez completado el análisis.</div>
+          <button id="btn-tg" onclick="sendTelegram()" disabled>▶ Enviar a Telegram</button>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div class="panel">
+        <div class="panel-hdr">
+          <span class="panel-title">Log Operaciones</span>
+          <button style="background:transparent;border:none;color:var(--muted);font-size:9px;cursor:pointer;" onclick="clearLog()">✕ limpiar</button>
+        </div>
+        <div id="log-body">
+          <div class="log-row log-hdr">
+            <span>Hora NY</span><span>Señal</span><span>Entrada</span><span>SL</span><span>TP</span><span>Contr.</span>
+          </div>
+          <div class="log-empty" id="log-empty">Sin operaciones registradas</div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<!-- MODAL CONFIG -->
+<div id="modal">
+  <div class="modal-box">
+    <h3>⚙ Configuración</h3>
+    <p>Configura las credenciales del sistema. Se guardan localmente en tu navegador.</p>
+    <div class="field"><label>Anthropic API Key</label><input type="password" id="cfg-apikey" placeholder="sk-ant-..."></div>
+    <div class="field"><label>Telegram Bot Token</label><input type="text" id="cfg-tg-token" placeholder="123456:ABC..."></div>
+    <div class="field"><label>Telegram Chat ID</label><input type="text" id="cfg-tg-chatid" placeholder="-100123456789"></div>
+    <div class="field"><label>Precio NQ (fuente)</label>
+      <select id="cfg-price-src">
+        <option value="yahoo">Yahoo Finance (auto)</option>
+        <option value="manual">Manual</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-save" onclick="saveConfig()">Guardar</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const S = {
+  apiKey: '',
+  tgToken: '',
+  tgChatId: '',
+  priceSrc: 'yahoo',
+  price: 0,
+  priceManual: false,
+  bias: { d:'',h7:'',h4:'',h1:'' },
+  lastAnalysis: null,
+  tgMsg: '',
+  log: []
+};
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(function init(){
+  const k = localStorage.getItem('nq_cfg');
+  if(k){ const c=JSON.parse(k); S.apiKey=c.apiKey||''; S.tgToken=c.tgToken||''; S.tgChatId=c.tgChatId||''; S.priceSrc=c.priceSrc||'yahoo'; }
+  const log = localStorage.getItem('nq_log');
+  if(log){ S.log = JSON.parse(log); renderLog(); }
+  if(!S.apiKey) setTimeout(openModal, 600);
+  updateClock();
+  setInterval(updateClock, 30000);
+  if(S.priceSrc === 'yahoo') fetchPrice();
+  setInterval(()=>{ if(S.priceSrc==='yahoo' && !S.priceManual) fetchPrice(); }, 60000);
+})();
+
+// ─── CLOCK & SESSION ─────────────────────────────────────────────────────────
+function getNYTime(){
+  const now = new Date();
+  // NY is UTC-4 (EDT) in March
+  const nyOffset = -4;
+  const utc = now.getTime() + now.getTimezoneOffset()*60000;
+  const ny = new Date(utc + nyOffset*3600000);
+  return ny;
+}
+
+function updateClock(){
+  const ny = getNYTime();
+  const h = ny.getHours(), m = ny.getMinutes();
+  const hh = String(h).padStart(2,'0'), mm = String(m).padStart(2,'0');
+  document.getElementById('ny-time').textContent = `NY ${hh}:${mm}`;
+
+  const badge = document.getElementById('sess-badge');
+  const totalMin = h*60+m;
+  // NY session 9:30 - 16:00
+  if(totalMin >= 570 && totalMin < 960){
+    badge.className='session-badge s-open'; badge.textContent='SESIÓN ABIERTA';
+  } else if(totalMin >= 240 && totalMin < 570){
+    badge.className='session-badge s-pre'; badge.textContent='PRE-MARKET';
+  } else {
+    badge.className='session-badge s-closed'; badge.textContent='MERCADO CERRADO';
+  }
+}
+
+function getSessionPhase(){
+  const ny = getNYTime();
+  const totalMin = ny.getHours()*60 + ny.getMinutes();
+  if(totalMin < 570) return { open:false, phase:'Pre-market o cerrado', risk:'NO OPERAR — fuera de sesión NY' };
+  if(totalMin >= 570 && totalMin < 630) return { open:true, phase:'Apertura NY (9:30–10:30 ET)', risk:'Alta volatilidad — spreads grandes' };
+  if(totalMin >= 630 && totalMin < 750) return { open:true, phase:'Media mañana (10:30–12:30 ET)', risk:'Buena liquidez' };
+  if(totalMin >= 750 && totalMin < 840) return { open:true, phase:'Lunch hour NY (12:30–14:00 ET)', risk:'Volumen bajo — evitar entradas' };
+  if(totalMin >= 840 && totalMin < 960) return { open:true, phase:'Tarde NY (14:00–16:00 ET)', risk:'Buena liquidez — posibles reversals al cierre' };
+  return { open:false, phase:'Después del cierre', risk:'NO OPERAR' };
+}
+
+// ─── PRICE ───────────────────────────────────────────────────────────────────
+async function fetchPrice(){
+  try {
+    const url = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/NQ%3DF?interval=1m&range=1d')}`;
+    const r = await fetch(url);
+    const d = await r.json();
+    const meta = d.chart.result[0].meta;
+    const p = meta.regularMarketPrice || meta.previousClose;
+    if(p){
+      S.price = p;
+      document.getElementById('nq-price').textContent = p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      const prev = meta.previousClose || p;
+      const chg = ((p-prev)/prev*100).toFixed(2);
+      const chgEl = document.getElementById('nq-chg');
+      chgEl.textContent = `NQ JUN26  ${chg >= 0 ? '+' : ''}${chg}%`;
+      chgEl.style.color = chg >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+  } catch(e){
+    document.getElementById('nq-price').textContent = 'N/D';
+  }
+}
+
+function togglePriceMode(){
+  S.priceManual = !S.priceManual;
+  document.getElementById('price-mode').textContent = S.priceManual ? '✎ manual' : '⟳ auto';
+  if(!S.priceManual) fetchPrice();
+}
+
+// ─── VOL PREVIEW ─────────────────────────────────────────────────────────────
+function renderVol(inputId, previewId){
+  const vals = document.getElementById(inputId).value.split(',').map(v=>parseFloat(v.trim())).filter(v=>!isNaN(v));
+  const prev = document.getElementById(previewId);
+  prev.innerHTML = '';
+  if(!vals.length) return;
+  const mx = Math.max(...vals.map(Math.abs)) || 1;
+  vals.forEach(v=>{
+    const h = Math.max(4, Math.round(Math.abs(v)/mx*26));
+    const b = document.createElement('div');
+    b.className = `vb ${v>=0?'u':'d'}`;
+    b.style.cssText = `width:${Math.floor(228/vals.length)-3}px;height:${h}px`;
+    prev.appendChild(b);
+  });
+}
+
+// ─── BIAS ─────────────────────────────────────────────────────────────────────
+function setBias(btn){
+  const tf = btn.dataset.tf, val = btn.dataset.v;
+  // Clear siblings
+  btn.closest('.bias-btns').querySelectorAll('.bb').forEach(b=>{
+    b.className='bb';
+  });
+  S.bias[tf] = val;
+  if(val==='ALCISTA') btn.classList.add('bull');
+  else if(val==='BAJISTA') btn.classList.add('bear');
+  else btn.classList.add('neu');
+}
+
+// ─── CONFIG MODAL ─────────────────────────────────────────────────────────────
+function openModal(){
+  document.getElementById('cfg-apikey').value = S.apiKey;
+  document.getElementById('cfg-tg-token').value = S.tgToken;
+  document.getElementById('cfg-tg-chatid').value = S.tgChatId;
+  document.getElementById('cfg-price-src').value = S.priceSrc;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+function saveConfig(){
+  S.apiKey = document.getElementById('cfg-apikey').value.trim();
+  S.tgToken = document.getElementById('cfg-tg-token').value.trim();
+  S.tgChatId = document.getElementById('cfg-tg-chatid').value.trim();
+  S.priceSrc = document.getElementById('cfg-price-src').value;
+  localStorage.setItem('nq_cfg', JSON.stringify({apiKey:S.apiKey,tgToken:S.tgToken,tgChatId:S.tgChatId,priceSrc:S.priceSrc}));
+  closeModal();
+}
+
+// ─── AGENT HELPERS ───────────────────────────────────────────────────────────
+function setAgentThinking(n){
+  document.getElementById(`card-ag${n}`).className='ag-card thinking';
+  document.getElementById(`dot-ag${n}`).className='ag-dot thinking';
+  document.getElementById(`out-ag${n}`).className='ag-body';
+  document.getElementById(`out-ag${n}`).textContent='Analizando...';
+}
+function setAgentDone(n, text, mode='neu'){
+  document.getElementById(`card-ag${n}`).className=`ag-card ${mode}`;
+  document.getElementById(`dot-ag${n}`).className=`ag-dot ${mode}`;
+  const el = document.getElementById(`out-ag${n}`);
+  el.className='ag-body ready fade-up';
+  el.textContent = text;
+}
+function setAgentWait(n, msg){
+  document.getElementById(`card-ag${n}`).className='ag-card';
+  document.getElementById(`dot-ag${n}`).className='ag-dot';
+  document.getElementById(`out-ag${n}`).className='ag-body';
+  document.getElementById(`out-ag${n}`).textContent = msg||'Esperando...';
+}
+
+async function callClaude(systemPrompt, userMsg){
+  const r = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:400,
+      system: systemPrompt,
+      messages:[{role:'user',content:userMsg}]
+    })
+  });
+  const d = await r.json();
+  if(d.error) throw new Error(d.error.message);
+  return d.content[0].text;
+}
+
+// ─── MAIN ANALYSIS ───────────────────────────────────────────────────────────
+async function runAnalysis(){
+  if(!S.apiKey){ openModal(); return; }
+
+  const btn = document.getElementById('btn-analyze');
+  btn.disabled = true; btn.textContent = '⏳ ANALIZANDO...';
+
+  // Get inputs
+  const vol5m = document.getElementById('vol5m').value.trim() || 'sin datos';
+  const vol1m = document.getElementById('vol1m').value.trim() || 'sin datos';
+  const pres5m = document.getElementById('pres5m').value;
+  const pres1m = document.getElementById('pres1m').value;
+  const notas = document.getElementById('notas').value.trim();
+  const escEl = document.getElementById('escenario');
+  const escenario = escEl ? escEl.value : '1';
+  const esc = {'1':'Escenario 1 - Minimo con volumen alto (manipulacion clara)','2':'Escenario 2 - No llevo minimo, rebote, esperar segunda manipulacion','3':'Escenario 3 - Volumen premercado no testeado en sesion'};
+  const escenarioTexto = esc[escenario]||'Escenario 1';
+  const tipoShortEl = document.getElementById('tipo-short');
+  const tipoShort = tipoShortEl ? tipoShortEl.value : 'na';
+  const tipoShortTexto = {'na':'N/A - Entrada LONG','arriba':'2da manipulacion ARRIBA de estructura (92% efectividad)','premkt':'2da manipulacion desde pre-market no testeado (54% efectividad)'}[tipoShort]||'N/A';
+  const volPremkt = parseFloat(document.getElementById('vol-premkt')?.value)||0;
+  const escenario = document.getElementById('escenario')?.value || '1';
+  const escenarioTexto = {'1':'Escenario 1 - Mínimo con volumen alto (manipulación clara)','2':'Escenario 2 - No se llevó el mínimo, rebote, buscar segunda manipulación','3':'Escenario 3 - Volumen del premercado no testeado'}[escenario] || 'Escenario 1';
+  const manualPrice = parseFloat(document.getElementById('precio-manual').value);
+  if(manualPrice && manualPrice > 0) S.price = manualPrice;
+  const precio = S.price || 23000;
+  const session = getSessionPhase();
+  const ny = getNYTime();
+  const horaET = `${String(ny.getHours()).padStart(2,'0')}:${String(ny.getMinutes()).padStart(2,'0')} ET`;
+
+  // Reset cards
+  [1,2,3,4,5,6].forEach(n => setAgentWait(n, 'Esperando...'));
+  document.getElementById('dec-signal').className='WAIT';
+  document.getElementById('dec-signal').textContent='WAIT';
+  ['rv-entry','rv-sl','rv-tp','rv-contr','rv-risk'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('conf-badge').textContent='—';
+  document.getElementById('conf-badge').className='';
+  document.getElementById('rr-badge').textContent='RR —';
+
+  // ── FASE 1: AG1, AG2, AG3 en paralelo ──────────────────────────────────────
+  [1,2,3].forEach(n=>setAgentThinking(n));
+
+  const [r1, r2, r3] = await Promise.all([
+
+    // AG1 - Sesión NY (estrategia LeninTrader)
+    callClaude(
+      `Eres AG1, agente de sesión NY para futuros NQ — estrategia LeninTrader. Responde en español, máximo 4 líneas.
+REGLA PRINCIPAL: NUNCA operar antes de la apertura NY (9:30 ET). Ni en pre-market.
+Solo se opera DESPUÉS de la apertura de New York.
+Fases clave:
+- 9:30-10:30 ET: Apertura — alta volatilidad, spreads grandes, validar bien la manipulación
+- 10:30-12:30 ET: Media mañana — óptimo, buena liquidez
+- 12:00-14:00 ET: Lunch hour NY — volumen bajo, evitar entradas
+- 14:00-16:00 ET: Tarde NY — buena liquidez, ojo con reversals al cierre
+IMPORTANTE: El premercado se observa pero NO se opera. Es para marcar niveles de volumen alto que podrían ser testeados al abrir.`,
+      `Hora NY actual: ${horaET}
+Fase detectada: ${session.phase}
+Sesión abierta: ${session.open ? 'SÍ' : 'NO'}
+Nota de riesgo: ${session.risk}
+
+¿Es válido operar ahora? ¿Qué precauciones de sesión aplicar?`
+    ).then(r=>{ setAgentDone(1,r, session.open?'bull':'bear'); return r; }),
+
+    // AG2 - Estructura multi-TF (estrategia LeninTrader 7 TF)
+    callClaude(
+      `Eres AG2, analista de estructura de mercado para futuros NQ — estrategia LeninTrader. Responde en español, máximo 5 líneas.
+JERARQUÍA DE 7 TIMEFRAMES (de mayor a menor peso):
+1. Diario → Contexto macro, tendencia principal
+2. 7 Horas → Ciclo intermedio
+3. 4 Horas → Tendencia media
+4. 1 Hora → Bias operativo del día
+5. 10 Minutos → Dirección intradía
+6. 5 Minutos → Zona donde se detecta la manipulación
+7. 1 Minuto → Donde se confirma y entra
+
+LÓGICA: Los TF mayores (D, 7H, 4H, 1H) dan el FOCO del día (alcista o bajista).
+Los TF menores (10M, 5M, 1M) son donde se ejecuta la entrada mediante manipulación.
+IMPORTANTE: Si los TF mayores dicen BAJISTA, se buscan entradas SHORT. Si ALCISTA, entradas LONG.
+Si hay contradicción entre TF mayores → ESPERAR o reducir tamaño de posición.
+Identifica también si hay MÍNIMOS o MÁXIMOS relevantes que el mercado podría ir a testear.`,
+      `Bias por timeframe (según el trader):
+- Diario (D): ${S.bias.d || 'NO DEFINIDO'}
+- 7 Horas: ${S.bias.h7 || 'NO DEFINIDO'}
+- 4 Horas: ${S.bias.h4 || 'NO DEFINIDO'}
+- 1 Hora: ${S.bias.h1 || 'NO DEFINIDO'}
+Precio actual NQ: ${precio.toFixed(2)}
+${notas ? 'Niveles/contexto adicional: '+notas : ''}
+
+¿Hay alineación multi-TF? ¿Cuál es el FOCO del día (ALCISTA/BAJISTA)? ¿Qué niveles clave vigilar?`
+    ).then(r=>{
+      const mode = r.includes('ALCISTA')?'bull':r.includes('BAJISTA')?'bear':'neu';
+      setAgentDone(2,r,mode); return r;
+    }),
+
+    // AG3 - Volumen Up/Down (estrategia REAL LeninTrader)
+    callClaude(
+      `Eres AG3, especialista en volumen para futuros NQ - estrategia LeninTrader. Responde en español, maximo 7 lineas.
+
+INDICADORES:
+- VolumenDominanciaF: negativo grande = vela VENTA con mucho volumen. Positivo grande = vela COMPRA con mucho volumen.
+- DominanciaPresionF: confirma cierre de COMPRA o VENTA.
+
+MANIPULACION DE VOLUMEN (concepto central):
+Los market makers crean velas de VENTA con volumen enorme para incitar a vender JUSTO DONDE ELLOS QUIEREN COMPRAR (y viceversa).
+
+PARA ENTRAR LONG:
+- 1ra condicion: vela de VENTA con pico de volumen (negativo grande) en 5M al frente del precio objetivo
+- 2da condicion: en 1M, vela de venta que TOCA o SUPERA el precio. Si no lo toca = ESPERAR.
+- VELA CERO (volumen casi cero): no es señal, el mercado no tiene interes en ese precio.
+
+PARA ENTRAR SHORT (doble manipulacion alcista):
+- Necesitas DOS manipulaciones de COMPRA (positivo grande) consecutivas
+- 1ra manipulacion: marcala, espera que el mercado suba de nuevo
+- 2da manipulacion: cuando el mercado vuelve a subir y hace OTRA vela de compra con volumen alto = ENTRAR SHORT
+- EFECTIVIDAD: si la 2da manipulacion ocurre ARRIBA de la estructura del mercado post-apertura = 92%
+- EFECTIVIDAD: si la 2da manipulacion ocurre desde nivel de pre-market (no testeado en sesion) = 54%
+
+PATRON ESCALERA: el mercado testea volumenes como escalones. Cada manipulacion lleva al siguiente nivel.
+COLORES: manipulaciones del pre-market son AZULES, de la sesion NY son de otro color. Deben coincidir para ser validas.
+REGLA SL: una estructura solo cuenta como primera estructura si ya fue TESTEADA por el mercado. Si no fue testeada, no puede ser la primera.`,
+      `VolumenDominanciaF 5M (ultimas 5 velas, negativo=venta positivo=compra):
+${vol5m}
+VolumenDominanciaF 1M (ultimas 5 velas):
+${vol1m}
+DominanciaPresionF 5M: ${pres5m}
+DominanciaPresionF 1M: ${pres1m}
+Precio objetivo (nivel blanco): ${precio.toFixed(2)}
+
+EVALUA:
+1. Hay vela con pico de volumen en 5M? Es vendedora o compradora? Esta al frente del precio?
+2. Se confirma en 1M con vela que toca o supera el precio?
+3. Es vela cero o manipulacion real?
+VEREDICTO (usa exactamente una de estas frases): MANIPULACION COMPRA confirmada / MANIPULACION VENTA confirmada / ESPERAR confirmacion 1M / SIN SENAL`
+    ).then(r=>{
+      const mode = r.includes('COMPRA confirmada')?'bull':r.includes('VENTA confirmada')?'bear':'neu';
+      setAgentDone(3,r,mode); return r;
+    })
+
+  ]);
+
+  // ── FASE 2: AG4 - Decisión ──────────────────────────────────────────────────
+  setAgentThinking(4);
+  const r4 = await callClaude(
+    `Eres AG4, tomador de decisiones para futuros NQ - estrategia LeninTrader. Responde en español.
+
+CONDICIONES LONG (deben cumplirse TODAS):
+1. Sesion NY abierta (despues 9:30 ET) - NUNCA antes de apertura
+2. Bias TF mayores (D, 7H, 4H, 1H) ALCISTA o neutral
+3. MANIPULACION DE VENTA en 5M: vela con pico negativo grande al frente del precio
+4. CONFIRMACION 1M: vela de venta que TOCA o supera el precio. Si no lo toca = HOLD
+5. Vela NO puede quedar por arriba del precio sin tocarlo = HOLD
+
+CONDICIONES SHORT - DOBLE MANIPULACION ALCISTA (deben cumplirse TODAS):
+1. Sesion NY abierta, bias TF mayores BAJISTA o neutral
+2. PRIMERA manipulacion de COMPRA en 5M: vela con pico positivo grande
+3. Mercado sube de nuevo despues de la primera
+4. SEGUNDA manipulacion de COMPRA en 5M confirmada en 1M: otra vela de compra con volumen alto
+5. SOLO al ver la SEGUNDA se entra en SHORT
+6. Si 2da manipulacion es ARRIBA de estructura post-apertura → ALTA confianza (92% efectividad)
+7. Si 2da manipulacion viene desde nivel pre-market no testeado → MEDIA confianza (54% efectividad)
+
+VOLUMENES PRE-MARKET NO TESTEADOS:
+- Si hay un volumen del pre-market que no fue testeado durante la sesion, el mercado VIENE a buscarlo
+- Esto puede cambiar la direccion del bias temporalmente
+- Ese nivel es prioritario como precio objetivo
+
+HOLD si: sesion cerrada / manipulacion en 5M sin confirmacion 1M / vela cero / precio no tocado / solo primera manipulacion sin segunda (para SHORT)
+
+FORMATO OBLIGATORIO:
+SENAL: [LONG|SHORT|HOLD]
+CONFIANZA: [ALTA|MEDIA|BAJA]
+EFECTIVIDAD: [92%|54%|N/A]
+ENTRADA: [precio exacto]
+RAZON: [condicion que se cumplio]
+INVALIDACION: [que cancelaria la entrada]`,
+    `AG1 (Sesión NY): ${r1}
+AG2 (Estructura): ${r2}
+AG1 (Sesion NY): ${r1}
+AG2 (Estructura multi-TF): ${r2}
+AG3 (Volumen): ${r3}
+Precio NQ actual: ${precio.toFixed(2)}
+Nivel blanco (precio objetivo): ${precio.toFixed(2)}
+Hora NY: ${horaET}
+Escenario: ${escenarioTexto}
+Tipo de SHORT seleccionado: ${tipoShortTexto}
+${volPremkt>0?'Volumen pre-market no testeado en: '+volPremkt:''}
+
+Toma la decision final. Para SHORT necesitas DOBLE manipulacion alcista. Indica la efectividad.`
+  );
+
+  const senal = r4.match(/SEÑAL:\s*(LONG|SHORT|HOLD)/i)?.[1]?.toUpperCase() || 'HOLD';
+  const conf = r4.match(/CONFIANZA:\s*(ALTA|MEDIA|BAJA)/i)?.[1]?.toUpperCase() || 'BAJA';
+  const entrada = parseFloat(r4.match(/ENTRADA:\s*([\d.,]+)/)?.[1]) || precio;
+  const mode4 = senal==='LONG'?'bull':senal==='SHORT'?'bear':'neu';
+  setAgentDone(4, r4, mode4);
+
+  // Update decision hero signal
+  const sigEl = document.getElementById('dec-signal');
+  sigEl.className = senal;
+  sigEl.textContent = senal;
+  document.getElementById('conf-badge').className = conf;
+  document.getElementById('conf-badge').textContent = conf;
+  document.getElementById('rv-entry').textContent = entrada.toLocaleString('en-US',{minimumFractionDigits:2});
+
+  // ── FASE 3: AG5 - Riesgo ───────────────────────────────────────────────────
+  setAgentThinking(5);
+  const r5 = await callClaude(
+    `Eres AG5, gestor de riesgo para futuros NQ de LeninTrader. Responde en español.
+Parámetros fijos:
+- Capital total: $50,000
+- Riesgo máximo por trade: 2% = $1,000
+- Ratio riesgo/beneficio: 1:1 (TP = misma distancia que SL en puntos)
+- Contrato NQ Full: $20 por punto, tick mínimo 0.25 pts = $5 por tick
+- Opera SOLO en NQ Full (no MNQ)
+
+CALCULO DE STOP LOSS (estrategia LeninTrader):
+El stop se coloca usando DOS ESTRUCTURAS debajo del precio de entrada:
+- Primera estructura: primer nivel de soporte debajo del precio de entrada
+- Segunda estructura: segundo nivel debajo del primero
+- El stop va 1-2 puntos abajo de la segunda estructura
+- Tipicamente 5-15 puntos de SL segun la volatilidad del momento
+
+Calculo contratos NQ: floor($1,000 / (SL_puntos x $20))
+TP = entrada + mismos puntos que SL (RR 1:1)
+Ganancia potencial = SL_puntos x contratos x $20
+Riesgo % = (riesgo_real / $50,000) x 100
+
+FORMATO OBLIGATORIO:
+SL: [precio] (-[pts] puntos desde entrada)
+TP: [precio] (+[pts] puntos) RR 1:1
+CONTRATOS NQ: [n]
+RIESGO REAL: $[monto] ([porcentaje]% del capital)
+GANANCIA POTENCIAL: $[monto] ([porcentaje]% del capital)
+NOTAS: [contexto de las dos estructuras usadas para el SL]`,
+    `Señal: ${senal}
+Precio de entrada: ${entrada.toFixed(2)}
+Análisis de decisión: ${r4}
+
+Calcula SL y TP basándote en la estructura, usa SL de 8-15 puntos típicamente.
+TP1 mínimo RR 1:2, TP2 mínimo RR 1:3.`
+  ).then(r=>{ setAgentDone(5,r,mode4); return r; });
+
+  // Parse risk data
+  const slP = r5.match(/SL:\s*([\d,]+\.?\d*)/)?.[1]?.replace(',','');
+  const tp1P = r5.match(/TP:\s*([\d,]+\.?\d*)/)?.[1]?.replace(',','');
+  const contrs = r5.match(/CONTRATOS NQ:\s*(\d+)/i)?.[1];
+  const riesgoR = r5.match(/RIESGO REAL:\s*\$?([\d,.]+)/i)?.[1]?.replace(',','');
+  const riesgoPct = r5.match(/RIESGO REAL:.*\(([\d.]+)%\)/i)?.[1];
+  const gananciaR = r5.match(/GANANCIA POTENCIAL:\s*\$?([\d,.]+)/i)?.[1]?.replace(',','');
+  const gananciaPct = r5.match(/GANANCIA POTENCIAL:.*\(([\d.]+)%\)/i)?.[1];
+
+  if(slP) document.getElementById('rv-sl').textContent = parseFloat(slP).toLocaleString('en-US',{minimumFractionDigits:2});
+  if(tp1P) document.getElementById('rv-tp').textContent = parseFloat(tp1P).toLocaleString('en-US',{minimumFractionDigits:2});
+  if(contrs) document.getElementById('rv-contr').textContent = `${contrs} NQ`;
+  if(riesgoR){
+    document.getElementById('rv-risk').textContent = `$${parseFloat(riesgoR).toLocaleString('en-US')}`;
+    document.getElementById('rv-risk-pct').textContent = `${riesgoPct || '2.00'}% capital`;
+  }
+  if(gananciaR){
+    document.getElementById('rv-gain').textContent = `$${parseFloat(gananciaR).toLocaleString('en-US')}`;
+    document.getElementById('rv-gain-pct').textContent = `${gananciaPct || '2.00'}% capital`;
+  }
+  document.getElementById('rr-badge').textContent = 'RR 1:1';
+  const efect = (r4.match(/EFECTIVIDAD:[^
+]+/i)||['','N/A'])[1].trim().replace('EFECTIVIDAD:','').trim();
+  const efEl = document.getElementById('efect-badge');
+  if(efEl){
+    efEl.textContent = 'Efect. '+efect;
+    if(efect.includes('92')){efEl.style.color='var(--green)';efEl.style.borderColor='var(--green)';}
+    else if(efect.includes('54')){efEl.style.color='var(--amber)';efEl.style.borderColor='var(--amber)';}
+  }
+  // Efectividad
+  const efect = r4.match(/EFECTIVIDAD:\s*([^
+]+)/i)?.[1]?.trim() || 'N/A';
+  const efEl = document.getElementById('efect-badge');
+  if(efEl){
+    efEl.textContent = 'Efect. '+efect;
+    if(efect.includes('92')) { efEl.style.color='var(--green)'; efEl.style.borderColor='var(--green)'; }
+    else if(efect.includes('54')) { efEl.style.color='var(--amber)'; efEl.style.borderColor='var(--amber)'; }
+    else { efEl.style.color='var(--muted)'; efEl.style.borderColor='var(--border2)'; }
+  }
+
+  // ── FASE 4: AG6 - Alerta Telegram ─────────────────────────────────────────
+  setAgentThinking(6);
+  const r6 = await callClaude(
+    `Eres AG6, formateador de alertas de Telegram para LeninTrader NQ. Responde solo con el mensaje de Telegram listo para enviar.
+Usa exactamente este formato con emojis y las líneas ━━━ como separadores.
+No agregues texto antes ni después del mensaje.`,
+    `Señal: ${senal}
+Confianza: ${conf}
+Entrada: ${entrada.toFixed(2)}
+SL y TP: ${r5}
+AG4 decisión: ${r4}
+Hora NY: ${horaET}
+Sesión: ${session.phase}
+Vol 5M: ${vol5m} | Presión: ${pres5m}
+Vol 1M: ${vol1m} | Presión: ${pres1m}
+Bias estructura: D:${S.bias.d} 7H:${S.bias.h7} 4H:${S.bias.h4} 1H:${S.bias.h1}
+
+Crea el mensaje de alerta para Telegram con formato limpio y los datos del setup.`
+  ).then(r=>{ setAgentDone(6,r,'neu'); return r; });
+
+  // Update Telegram preview
+  S.tgMsg = r6;
+  const tgPrev = document.getElementById('tg-preview');
+  tgPrev.textContent = r6;
+  tgPrev.className = 'ready';
+  document.getElementById('btn-tg').disabled = false;
+
+  // Save to log
+  const logEntry = {
+    hora: horaET,
+    senal,
+    entrada: entrada.toFixed(2),
+    sl: slP || '—',
+    tp: tp1P || '—',
+    contrs: contrs ? `${contrs} NQ` : '—',
+    ts: Date.now()
+  };
+  S.log.unshift(logEntry);
+  if(S.log.length > 20) S.log = S.log.slice(0,20);
+  localStorage.setItem('nq_log', JSON.stringify(S.log));
+  renderLog();
+
+  btn.disabled = false; btn.textContent = '▶ ANALIZAR';
+}
+
+// ─── TELEGRAM ─────────────────────────────────────────────────────────────────
+async function sendTelegram(){
+  if(!S.tgToken || !S.tgChatId){ alert('Configura el Bot Token y Chat ID en ⚙ Config'); return; }
+  const btn = document.getElementById('btn-tg');
+  btn.disabled = true; btn.textContent = '⏳ Enviando...';
+  document.getElementById('tg-status').textContent = 'enviando...';
+  try{
+    const r = await fetch(`https://api.telegram.org/bot${S.tgToken}/sendMessage`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ chat_id: S.tgChatId, text: S.tgMsg, parse_mode:'HTML' })
+    });
+    const d = await r.json();
+    if(d.ok){
+      document.getElementById('tg-status').style.color='var(--green)';
+      document.getElementById('tg-status').textContent='✓ enviado';
+      btn.textContent='✓ Enviado';
+      setTimeout(()=>{ btn.textContent='▶ Enviar a Telegram'; btn.disabled=false; document.getElementById('tg-status').textContent='—'; document.getElementById('tg-status').style.color=''; },3000);
+    } else {
+      throw new Error(d.description);
+    }
+  }catch(e){
+    document.getElementById('tg-status').style.color='var(--red)';
+    document.getElementById('tg-status').textContent='✕ error';
+    btn.textContent='✕ Error — reintentar';
+    btn.disabled=false;
+    alert('Error Telegram: '+e.message);
+  }
+}
+
+// ─── LOG ──────────────────────────────────────────────────────────────────────
+function renderLog(){
+  const body = document.getElementById('log-body');
+  const empty = document.getElementById('log-empty');
+  if(!S.log.length){ if(empty) empty.style.display='block'; return; }
+  if(empty) empty.style.display='none';
+  // Remove old rows except header
+  body.querySelectorAll('.log-row:not(.log-hdr)').forEach(r=>r.remove());
+  S.log.forEach(e=>{
+    const row = document.createElement('div');
+    row.className='log-row';
+    const tag = e.senal==='LONG'?'L':e.senal==='SHORT'?'S':'H';
+    row.innerHTML=`<span>${e.hora}</span><span><span class="tag ${tag}">${e.senal}</span></span><span>${e.entrada}</span><span style="color:var(--red)">${e.sl}</span><span style="color:var(--green)">${e.tp}</span><span>${e.contrs}</span>`;
+    body.appendChild(row);
+  });
+}
+
+function clearLog(){
+  S.log=[];
+  localStorage.removeItem('nq_log');
+  document.getElementById('log-body').querySelectorAll('.log-row:not(.log-hdr)').forEach(r=>r.remove());
+  const empty = document.getElementById('log-empty');
+  if(empty) empty.style.display='block';
+}
+</script>
+</body>
+</html>
