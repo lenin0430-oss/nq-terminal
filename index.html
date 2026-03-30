@@ -3,590 +3,363 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NQ Terminal — Nasdaq Futures</title>
+<title>NQ Terminal — Morning Briefing</title>
 <style>
   :root {
-    --bg: #0d0f14;
-    --panel: #13161e;
-    --border: #1e2330;
-    --green: #00ff88;
-    --red: #ff4466;
-    --yellow: #ffcc00;
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1c2128;
+    --border: #30363d;
     --blue: #4488ff;
-    --cyan: #00ccff;
+    --green: #00e676;
+    --red: #ff4444;
+    --yellow: #ffd700;
     --orange: #ff8800;
-    --text: #c8d0e0;
-    --dim: #5a6480;
-    --header-bg: #0a0c12;
+    --cyan: #00ccff;
+    --text: #c9d1d9;
+    --dim: #8b949e;
+    --white: #f0f6fc;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Courier New', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.5;
     min-height: 100vh;
   }
 
-  /* TOP BAR */
-  .topbar {
-    background: var(--header-bg);
-    border-bottom: 1px solid var(--border);
-    padding: 10px 20px;
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0d1b3e 0%, #1a2f5e 50%, #0d1b3e 100%);
+    border-bottom: 1px solid #2a4a8a;
+    padding: 14px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
   }
-  .topbar-left { display: flex; align-items: center; gap: 16px; }
-  .logo { color: var(--green); font-size: 16px; font-weight: bold; letter-spacing: 2px; }
-  .logo span { color: var(--cyan); }
+  .header-left { display: flex; flex-direction: column; gap: 6px; }
+  .header-title { color: var(--white); font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { color: #7aa2e0; font-size: 11px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .badge {
-    background: rgba(0,255,136,0.1);
-    border: 1px solid var(--green);
-    color: var(--green);
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-size: 10px;
-    letter-spacing: 1px;
+    display: inline-block; padding: 2px 10px; border-radius: 3px;
+    font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
   }
-  .badge.red { background: rgba(255,68,102,0.1); border-color: var(--red); color: var(--red); }
-  .topbar-right { color: var(--dim); font-size: 11px; }
-  .live-dot {
-    display: inline-block;
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    margin-right: 5px;
-    animation: pulse 1.5s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
+  .badge-red { background: rgba(255,68,68,0.2); border: 1px solid rgba(255,68,68,0.5); color: #ff6666; }
+  .badge-green { background: rgba(0,230,118,0.2); border: 1px solid rgba(0,230,118,0.5); color: #00e676; }
+  .badge-yellow { background: rgba(255,215,0,0.2); border: 1px solid rgba(255,215,0,0.5); color: #ffd700; }
+  .badge-blue { background: rgba(68,136,255,0.2); border: 1px solid rgba(68,136,255,0.5); color: #6699ff; }
+  .header-price-block { text-align: right; }
+  .live-price { font-size: 36px; font-weight: 700; color: var(--white); font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+  .live-price.up { color: var(--green); }
+  .live-price.down { color: var(--red); }
+  .price-meta { color: #7aa2e0; font-size: 11px; margin-top: 2px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  /* MAIN GRID */
-  .main { padding: 16px 20px; max-width: 1400px; margin: 0 auto; }
+  /* MAIN */
+  .main { padding: 16px 24px; max-width: 1300px; margin: 0 auto; }
 
-  /* DATE HEADER */
-  .date-header {
-    text-align: center;
-    padding: 20px 0 16px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
+  /* SESSION BAR */
+  .session-bar {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+    padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--dim); margin-bottom: 14px;
   }
-  .date-header h1 { color: var(--cyan); font-size: 20px; letter-spacing: 3px; text-transform: uppercase; }
-  .date-header p { color: var(--dim); font-size: 11px; margin-top: 4px; letter-spacing: 1px; }
-
-  /* MARKET STRIP */
-  .market-strip {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .ticker-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 12px 16px;
-    flex: 1;
-    min-width: 150px;
-  }
-  .ticker-card .label { color: var(--dim); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
-  .ticker-card .value { font-size: 20px; font-weight: bold; margin: 4px 0; }
-  .ticker-card .change { font-size: 12px; }
-  .green { color: var(--green); }
-  .red { color: var(--red); }
-  .yellow { color: var(--yellow); }
-  .cyan { color: var(--cyan); }
-  .orange { color: var(--orange); }
-  .dim { color: var(--dim); }
-
-  /* SECTIONS GRID */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-  @media (max-width: 900px) {
-    .grid-2, .grid-3 { grid-template-columns: 1fr; }
-  }
-
-  /* PANEL */
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .panel-header {
-    background: var(--header-bg);
-    border-bottom: 1px solid var(--border);
-    padding: 8px 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .panel-header .icon { font-size: 14px; }
-  .panel-header .title { color: var(--cyan); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
-  .panel-body { padding: 14px; }
-
-  /* LEVELS */
-  .level-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 0;
-    border-bottom: 1px solid rgba(30,35,48,0.6);
-  }
-  .level-row:last-child { border-bottom: none; }
-  .level-label { color: var(--dim); font-size: 11px; }
-  .level-value { font-size: 14px; font-weight: bold; }
-  .level-bar {
-    width: 100%;
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    margin: 10px 0 4px;
-    position: relative;
-  }
-  .level-bar-fill {
-    height: 100%;
-    border-radius: 2px;
-    background: linear-gradient(90deg, var(--red), var(--yellow), var(--green));
-  }
-  .level-pointer {
-    position: absolute;
-    top: -4px;
-    width: 10px; height: 10px;
-    background: var(--yellow);
-    border-radius: 50%;
-    transform: translateX(-50%);
-    border: 2px solid var(--bg);
-  }
-
-  /* NEWS */
-  .news-item {
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(30,35,48,0.8);
-  }
-  .news-item:last-child { border-bottom: none; }
-  .news-number { color: var(--dim); font-size: 10px; margin-bottom: 3px; }
-  .news-title { color: var(--text); font-size: 12px; line-height: 1.5; margin-bottom: 3px; }
-  .news-meta { color: var(--dim); font-size: 10px; }
-  .news-tag {
-    display: inline-block;
-    padding: 1px 6px;
-    border-radius: 2px;
-    font-size: 9px;
-    letter-spacing: 1px;
-    margin-right: 6px;
-    text-transform: uppercase;
-  }
-  .tag-high { background: rgba(255,68,102,0.15); color: var(--red); border: 1px solid rgba(255,68,102,0.3); }
-  .tag-med { background: rgba(255,204,0,0.1); color: var(--yellow); border: 1px solid rgba(255,204,0,0.3); }
-  .tag-oil { background: rgba(255,136,0,0.1); color: var(--orange); border: 1px solid rgba(255,136,0,0.3); }
-  .tag-fed { background: rgba(68,136,255,0.1); color: var(--blue); border: 1px solid rgba(68,136,255,0.3); }
-  .tag-tech { background: rgba(0,204,255,0.1); color: var(--cyan); border: 1px solid rgba(0,204,255,0.3); }
-
-  /* CALENDAR */
-  .cal-row {
-    display: grid;
-    grid-template-columns: 70px 1fr 80px 60px;
-    gap: 8px;
-    padding: 7px 0;
-    border-bottom: 1px solid rgba(30,35,48,0.6);
-    align-items: center;
-  }
-  .cal-row:last-child { border-bottom: none; }
-  .cal-row.today { background: rgba(0,255,136,0.03); margin: 0 -14px; padding: 7px 14px; }
-  .cal-header { color: var(--dim); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
-  .cal-date { color: var(--cyan); font-size: 11px; }
-  .cal-event { color: var(--text); font-size: 11px; }
-  .cal-time { color: var(--dim); font-size: 10px; }
-  .impact-high { color: var(--red); font-size: 10px; }
-  .impact-med { color: var(--yellow); font-size: 10px; }
-  .impact-low { color: var(--dim); font-size: 10px; }
-
-  /* SENTIMENT */
-  .sentiment-bar-wrap { margin: 8px 0; }
-  .sentiment-label { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; }
-  .sentiment-track { width: 100%; height: 18px; background: var(--border); border-radius: 3px; overflow: hidden; display: flex; }
-  .sentiment-bull { background: linear-gradient(90deg, #00cc66, #00ff88); height: 100%; transition: width 0.5s; }
-  .sentiment-bear { background: linear-gradient(90deg, #cc2244, #ff4466); height: 100%; transition: width 0.5s; }
-  .sentiment-neutral { background: #2a3048; height: 100%; }
-  .sentiment-overall {
-    text-align: center;
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: bold;
-    letter-spacing: 2px;
-  }
-  .bearish-bg { background: rgba(255,68,102,0.1); border: 1px solid rgba(255,68,102,0.3); color: var(--red); }
-  .bullish-bg { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); color: var(--green); }
-  .neutral-bg { background: rgba(90,100,128,0.2); border: 1px solid rgba(90,100,128,0.3); color: var(--dim); }
-
-  /* RISKS */
-  .risk-item {
-    display: flex;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(30,35,48,0.6);
-  }
-  .risk-item:last-child { border-bottom: none; }
-  .risk-num { color: var(--red); font-size: 12px; font-weight: bold; min-width: 18px; }
-  .risk-text { color: var(--text); font-size: 11px; line-height: 1.5; }
-  .risk-key { color: var(--yellow); }
+  .session-bar span { color: var(--text); }
 
   /* EXECUTIVE SUMMARY */
-  .exec-summary {
-    background: rgba(0,204,255,0.04);
-    border: 1px solid rgba(0,204,255,0.15);
-    border-left: 3px solid var(--cyan);
-    border-radius: 4px;
-    padding: 16px 18px;
-    margin-bottom: 12px;
+  .exec-box {
+    background: var(--bg2); border: 1px solid #2a4a8a; border-left: 4px solid var(--blue);
+    border-radius: 6px; padding: 18px 20px; margin-bottom: 14px;
   }
-  .exec-summary p { color: var(--text); font-size: 12px; line-height: 1.8; }
-  .exec-summary strong { color: var(--cyan); }
+  .exec-title {
+    color: var(--blue); font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .exec-title::after { content: ''; flex: 1; height: 1px; background: rgba(68,136,255,0.3); }
+  .exec-text { color: var(--text); font-size: 13px; line-height: 1.8; margin-bottom: 12px; }
+  .exec-alert {
+    color: var(--yellow); font-size: 12px; line-height: 1.7;
+    border-top: 1px solid rgba(255,215,0,0.2); padding-top: 10px; margin-top: 4px;
+  }
+  .exec-alert strong { color: #ffcc00; }
 
-  /* CRITICAL LEVEL */
-  .critical-box {
-    background: rgba(255,68,102,0.07);
-    border: 1px solid rgba(255,68,102,0.25);
-    border-radius: 4px;
-    padding: 10px 14px;
-    margin-top: 10px;
-    text-align: center;
-  }
-  .critical-box .crit-label { color: var(--dim); font-size: 9px; text-transform: uppercase; letter-spacing: 2px; }
-  .critical-box .crit-value { color: var(--red); font-size: 22px; font-weight: bold; margin: 3px 0; }
-  .critical-box .crit-desc { color: var(--dim); font-size: 10px; }
+  /* INDICATORS */
+  .indicators { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .ind-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; text-align: center; }
+  .ind-label { color: var(--dim); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .ind-value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ind-change { font-size: 10px; color: var(--dim); margin-top: 3px; }
 
-  /* VIX */
-  .vix-box {
-    background: rgba(255,204,0,0.05);
-    border: 1px solid rgba(255,204,0,0.2);
-    border-radius: 4px;
-    padding: 10px 14px;
-    margin-top: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+  /* SCENARIOS */
+  .scenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .scenario-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; }
+  .scenario-card.principal { border-color: rgba(0,230,118,0.3); }
+  .scenario-card.alternativo { border-color: rgba(255,68,68,0.3); }
+  .scenario-header { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
+  .scenario-prob { font-size: 28px; font-weight: 700; margin-bottom: 10px; }
+  .scenario-card.principal .scenario-prob { color: var(--green); }
+  .scenario-card.alternativo .scenario-prob { color: var(--red); }
+  .scenario-text { color: var(--text); font-size: 12px; line-height: 1.7; }
+  .scenario-catalyst { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 11px; color: var(--dim); }
+  .scenario-catalyst strong { color: var(--yellow); }
+  .scenario-target { display: inline-block; margin-top: 8px; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); padding: 3px 10px; border-radius: 3px; font-size: 11px; color: var(--yellow); }
 
-  /* FOOTER */
-  .footer {
-    border-top: 1px solid var(--border);
-    padding: 14px 20px;
-    text-align: center;
-    color: var(--dim);
-    font-size: 10px;
-    letter-spacing: 1px;
-    margin-top: 8px;
+  /* PANELS */
+  .panels-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .panel-header { background: var(--bg3); border-bottom: 1px solid var(--border); padding: 8px 14px; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); }
+  .panel-body { padding: 12px 14px; }
+
+  .level-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(48,54,61,0.6); font-size: 12px; }
+  .level-row:last-child { border-bottom: none; }
+  .level-label { color: var(--dim); }
+  .level-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .level-zone { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 4px; margin-top: 8px; font-size: 12px; font-weight: 700; }
+  .zone-buy { background: rgba(0,230,118,0.08); border: 1px solid rgba(0,230,118,0.25); }
+  .zone-sell { background: rgba(255,68,68,0.08); border: 1px solid rgba(255,68,68,0.25); }
+
+  .analysis-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(48,54,61,0.6); font-size: 11px; }
+  .analysis-row:last-child { border-bottom: none; }
+  .analysis-label { color: var(--dim); flex: 0 0 auto; max-width: 45%; }
+  .analysis-value { font-weight: 600; text-align: right; max-width: 55%; }
+
+  .footer { border-top: 1px solid var(--border); padding: 12px 24px; text-align: center; color: var(--dim); font-size: 10px; letter-spacing: 0.5px; }
+  .footer span { color: var(--blue); }
+
+  .red { color: var(--red) !important; }
+  .green { color: var(--green) !important; }
+  .yellow { color: var(--yellow) !important; }
+  .orange { color: var(--orange) !important; }
+
+  @media (max-width: 900px) {
+    .indicators { grid-template-columns: repeat(2, 1fr); }
+    .scenarios { grid-template-columns: 1fr; }
+    .panels-3 { grid-template-columns: 1fr; }
+    .live-price { font-size: 26px; }
+    .session-bar { flex-direction: column; gap: 6px; text-align: center; }
   }
-  .footer span { color: var(--green); }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-left">
-    <div class="logo">NQ<span>TERMINAL</span></div>
-    <div class="badge">LIVE</div>
-    <div class="badge red">⚠ ALTA VOLATILIDAD</div>
+<div class="header">
+  <div class="header-left">
+    <div class="header-title">📊 NQ Terminal — Morning Briefing</div>
+    <div class="header-sub">
+      <span id="briefingDate">NQ 06-26 · Lunes 30 Mar 2026</span>
+      <span class="badge badge-red" id="trendBadge">BAJISTA</span>
+      <span class="badge badge-yellow" id="convBadge">Convicción: ALTA</span>
+      <span class="badge badge-blue">SESIÓN NY</span>
+    </div>
   </div>
-  <div class="topbar-right">
-    <span class="live-dot"></span>
-    SESIÓN NY · 9:30 AM – 4:00 PM ET &nbsp;|&nbsp; LUNES 30 MAR 2026
+  <div class="header-price-block">
+    <div class="live-price down" id="livePrice">—,———</div>
+    <div class="price-meta">
+      <span class="live-dot"></span>
+      <span id="priceStatus">Cargando...</span>
+      <span id="priceChange" style="color:var(--red)"></span>
+    </div>
   </div>
 </div>
 
 <div class="main">
 
-  <!-- DATE HEADER -->
-  <div class="date-header">
-    <h1>📊 Briefing NQ — Lunes 30 de Marzo 2026</h1>
-    <p>Sesión de Nueva York · Futuros Nasdaq 100 E-Mini (/NQ)</p>
+  <div class="session-bar">
+    <div>⏰ Sesión NY: <span>9:30 AM – 4:00 PM ET</span> &nbsp;|&nbsp; Reporte: <span id="genTime">Lunes 30 Mar 2026 · 09:09 AM ET</span></div>
+    <div>NQ: <span id="lastPriceSmall" style="color:var(--red)">24,750</span> &nbsp;|&nbsp; VIX: <span style="color:var(--yellow)" id="vixSmall">30.90</span> &nbsp;|&nbsp; Brent: <span style="color:var(--orange)" id="brentSmall">$118</span> &nbsp;|&nbsp; DXY: <span id="dxySmall">100.26</span></div>
   </div>
 
-  <!-- MARKET STRIP -->
-  <div class="market-strip">
-    <div class="ticker-card">
-      <div class="label">/NQ Futures (Jun '26)</div>
-      <div class="value red">~24,750</div>
-      <div class="change red">▼ -0.77% vs cierre anterior</div>
-    </div>
-    <div class="ticker-card">
-      <div class="label">/ES Futures (S&P 500)</div>
-      <div class="value red">~6,368</div>
-      <div class="change red">▼ -0.60% premarket</div>
-    </div>
-    <div class="ticker-card">
-      <div class="label">VIX — Volatilidad</div>
-      <div class="value yellow">30.90</div>
-      <div class="change yellow">⚠ ELEVADO — sizing reducido</div>
-    </div>
-    <div class="ticker-card">
-      <div class="label">Brent Crude</div>
-      <div class="value orange">~$118</div>
-      <div class="change orange">▲ +0.8% — Hormuz cerrado</div>
-    </div>
-    <div class="ticker-card">
-      <div class="label">Oro (Gold)</div>
-      <div class="value green">$4,560</div>
-      <div class="change green">▲ +0.80% — refugio activo</div>
-    </div>
-  </div>
-
-  <!-- ROW 1: LEVELS + NEWS -->
-  <div class="grid-2">
-
-    <!-- LEVELS -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="icon">🎯</span>
-        <span class="title">Niveles Clave NQ</span>
-      </div>
-      <div class="panel-body">
-        <div class="level-row">
-          <span class="level-label">🔴 Resistencia 2</span>
-          <span class="level-value red">25,200</span>
-        </div>
-        <div class="level-row">
-          <span class="level-label">🔴 Resistencia 1</span>
-          <span class="level-value red">25,025</span>
-        </div>
-        <div class="level-row">
-          <span class="level-label">📍 Precio Actual</span>
-          <span class="level-value yellow">~24,750</span>
-        </div>
-        <div class="level-row">
-          <span class="level-label">🟡 Soporte Fib 0.786</span>
-          <span class="level-value yellow">24,378</span>
-        </div>
-        <div class="level-row">
-          <span class="level-label">🟢 Soporte 1</span>
-          <span class="level-value" style="color:#ffaa00">24,411</span>
-        </div>
-
-        <div class="critical-box">
-          <div class="crit-label">⚠ Nivel Crítico del Día</div>
-          <div class="crit-value">24,000</div>
-          <div class="crit-desc">Ruptura → aceleración bajista hacia 23,050</div>
-        </div>
-
-        <div class="vix-box">
-          <div>
-            <div style="color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:1px">Tendencia Temporal</div>
-            <div style="color:var(--red);font-size:12px;font-weight:bold;margin-top:3px">📉 BAJISTA — Marcos Alineados</div>
-          </div>
-          <div style="text-align:right">
-            <div style="color:var(--dim);font-size:10px">Soporte final</div>
-            <div style="color:var(--red);font-size:14px;font-weight:bold">23,050</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- NEWS -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="icon">📰</span>
-        <span class="title">Noticias Principales</span>
-      </div>
-      <div class="panel-body">
-        <div class="news-item">
-          <div class="news-number"><span class="news-tag tag-oil">🛢 PETRÓLEO</span></div>
-          <div class="news-title">Brent roza $120 — Trump amenaza con controlar isla de Kharg (Irán). Hormuz cerrado desde el 4 de marzo.</div>
-          <div class="news-meta">CNN Business / NPR · 29-30 mar 2026</div>
-        </div>
-        <div class="news-item">
-          <div class="news-number"><span class="news-tag tag-high">📉 CORRECCIÓN</span></div>
-          <div class="news-title">S&P 500 entra en corrección oficial. Cada índice mayor de EE.UU. registra el peor mes desde inicio de la guerra con Irán.</div>
-          <div class="news-meta">CNBC · 30 mar 2026</div>
-        </div>
-        <div class="news-item">
-          <div class="news-number"><span class="news-tag tag-fed">🏛 FED</span></div>
-          <div class="news-title">FOMC voto 11-1 mantener tasas 3.50%–3.75%. Powell: inflación no cede. Solo 1 recorte proyectado en 2026.</div>
-          <div class="news-meta">Federal Reserve / Yahoo Finance · 18 mar 2026</div>
-        </div>
-        <div class="news-item">
-          <div class="news-number"><span class="news-tag tag-tech">💻 TECH</span></div>
-          <div class="news-title">NVDA, AAPL, MSFT lideran caídas. Rotación hacia energía y defensivos. ARK ETFs (ARKG) cayeron -5.66%.</div>
-          <div class="news-meta">Stock Market Watch · 30 mar 2026</div>
-        </div>
-        <div class="news-item">
-          <div class="news-number"><span class="news-tag tag-high">📅 MACRO</span></div>
-          <div class="news-title">NFP de marzo el viernes 3 de abril · 8:30 AM ET. Dato clave para narrativa Q2 2026 con Fed en pausa.</div>
-          <div class="news-meta">BLS / Guggenheim · próx. viernes</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ROW 2: CALENDAR + SENTIMENT + RISKS -->
-  <div class="grid-3">
-
-    <!-- CALENDAR -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="icon">📅</span>
-        <span class="title">Calendario Económico</span>
-      </div>
-      <div class="panel-body">
-        <div class="cal-row cal-header">
-          <div>Fecha</div>
-          <div>Reporte</div>
-          <div>Hora ET</div>
-          <div>Impacto</div>
-        </div>
-        <div class="cal-row today">
-          <div class="cal-date" style="color:var(--green)">Lun 30 ★</div>
-          <div class="cal-event dim">Sin eventos alto impacto</div>
-          <div class="cal-time">—</div>
-          <div class="impact-low">● BAJO</div>
-        </div>
-        <div class="cal-row">
-          <div class="cal-date">Mar 31</div>
-          <div class="cal-event">Conf. Consumidor / JOLTS</div>
-          <div class="cal-time">10:00 AM</div>
-          <div class="impact-med">● MED</div>
-        </div>
-        <div class="cal-row">
-          <div class="cal-date">Mié 1</div>
-          <div class="cal-event">ISM Manufacturing</div>
-          <div class="cal-time">10:00 AM</div>
-          <div class="impact-high">● ALTO</div>
-        </div>
-        <div class="cal-row">
-          <div class="cal-date">Jue 2</div>
-          <div class="cal-event">PCE Core / Desempleo</div>
-          <div class="cal-time">8:30 AM</div>
-          <div class="impact-high">● ALTO</div>
-        </div>
-        <div class="cal-row" style="background:rgba(255,68,102,0.05)">
-          <div class="cal-date red">Vie 3 🔥</div>
-          <div class="cal-event red" style="font-weight:bold">NFP — Nóminas</div>
-          <div class="cal-time">8:30 AM</div>
-          <div class="impact-high" style="font-weight:bold">🔴 MUY</div>
-        </div>
-        <div style="margin-top:10px;padding:8px;background:rgba(255,68,102,0.05);border-radius:3px;text-align:center">
-          <div style="color:var(--dim);font-size:9px;letter-spacing:1px">CIERRE DE TRIMESTRE</div>
-          <div style="color:var(--yellow);font-size:11px;margin-top:2px">31 Mar · Fin Q1 2026 — Rebalanceos institucionales</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SENTIMENT -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="icon">📱</span>
-        <span class="title">Sentimiento del Mercado</span>
-      </div>
-      <div class="panel-body">
-        <div class="sentiment-bar-wrap">
-          <div class="sentiment-label">
-            <span class="green">🐂 Bulls 30.4%</span>
-            <span class="red">Bears 52% 🐻</span>
-          </div>
-          <div class="sentiment-track">
-            <div class="sentiment-bull" style="width:30.4%"></div>
-            <div class="sentiment-neutral" style="width:17.6%"></div>
-            <div class="sentiment-bear" style="width:52%"></div>
-          </div>
-          <div style="color:var(--dim);font-size:9px;margin-top:3px">AAII Sentiment Survey</div>
-        </div>
-
-        <div class="sentiment-bar-wrap" style="margin-top:12px">
-          <div class="sentiment-label">
-            <span style="color:#4488ff">📞 QQQ Calls 46.5%</span>
-            <span class="red">Puts 53.5% 📉</span>
-          </div>
-          <div class="sentiment-track">
-            <div style="background:linear-gradient(90deg,#2244aa,#4488ff);height:100%;width:46.5%"></div>
-            <div class="sentiment-bear" style="width:53.5%"></div>
-          </div>
-          <div style="color:var(--dim);font-size:9px;margin-top:3px">QQQ Options Flow</div>
-        </div>
-
-        <div style="margin-top:12px">
-          <div style="color:var(--dim);font-size:10px;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">X (Twitter) — $NQ $QQQ</div>
-          <div style="color:var(--text);font-size:11px;line-height:1.7">
-            • Conversación dominada por: <span class="orange">$OIL, Irán, Fed</span><br>
-            • Soporte clave mencionado: <span class="yellow">QQQ $585</span><br>
-            • Alta actividad en: <span class="red">stagflación, recesión</span><br>
-            • Polym. NDX verde hoy: <span class="green">58%</span>
-          </div>
-        </div>
-
-        <div class="sentiment-overall bearish-bg" style="margin-top:12px">
-          🔴 SENTIMIENTO BAJISTA
-        </div>
-        <div style="color:var(--dim);font-size:10px;text-align:center;margin-top:5px">
-          Señales aisladas de capitulación · posibles rebotes técnicos
-        </div>
-      </div>
-    </div>
-
-    <!-- RISKS -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="icon">⚠️</span>
-        <span class="title">Riesgos a Vigilar Hoy</span>
-      </div>
-      <div class="panel-body">
-        <div class="risk-item">
-          <div class="risk-num">1</div>
-          <div class="risk-text"><span class="risk-key">Irán / Hormuz</span> — Noticias de operaciones terrestres o ataque a Kharg Island pueden mover NQ <span class="red">±200 pts</span> en minutos.</div>
-        </div>
-        <div class="risk-item">
-          <div class="risk-num">2</div>
-          <div class="risk-text"><span class="risk-key">Petróleo Brent</span> — Si supera <span class="red">$120</span> con fuerza, el mercado entra en pánico inflacionario. Seguir WTI y Brent en tiempo real.</div>
-        </div>
-        <div class="risk-item">
-          <div class="risk-num">3</div>
-          <div class="risk-text"><span class="risk-key">Fed Speakers</span> — Con mercado nervioso, cualquier comentario hawkish de miembros de la FOMC amplifica la caída.</div>
-        </div>
-        <div class="risk-item">
-          <div class="risk-num">4</div>
-          <div class="risk-text"><span class="risk-key">Nivel 24,000 NQ</span> — Ruptura sostenida activa stop-losses en cascada. <span class="red">Línea de defensa más crítica del día.</span></div>
-        </div>
-        <div class="risk-item">
-          <div class="risk-num">5</div>
-          <div class="risk-text"><span class="risk-key">VIX 30.90</span> — Spreads amplios. Considera <span class="yellow">sizing conservador</span> y gestión estricta del riesgo.</div>
-        </div>
-        <div class="risk-item">
-          <div class="risk-num">6</div>
-          <div class="risk-text"><span class="risk-key">Gap de apertura</span> — Premarket bajista. Vigilar si el gap se llena o hay <span class="red">follow-through</span> bajista en los primeros 30 min.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- EXECUTIVE SUMMARY -->
-  <div class="exec-summary">
-    <div style="color:var(--cyan);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">💡 Resumen Ejecutivo</div>
-    <p>
-      El NQ abre la semana bajo presión con futuros en <strong>-0.77%</strong>, arrastrados por la guerra en Irán, el petróleo cerca de máximos históricos (~$118) y un entorno macro hostil (Fed en pausa, inflación persistente, cuatro semanas consecutivas de pérdidas).
-      El sentimiento es claramente <strong>bajista</strong> con el índice en la mitad inferior de su rango y los marcos temporales (diario, semanal, mensual) alineados a la baja.
-      <strong>El nivel 24,000 es la línea de defensa crítica del día</strong> — un cierre por debajo abriría camino a los 23,050.
-      La semana culmina el viernes con el NFP, dato determinante para el Q2 2026.
-      <strong>Operar con sizing reducido, gestión estricta del riesgo y prioridad a setups de corto plazo mientras persista la incertidumbre geopolítica.</strong>
+  <div class="exec-box">
+    <div class="exec-title">📋 Resumen Ejecutivo — Morning Call</div>
+    <p class="exec-text" id="execMain">
+      El NQ abre la semana bajo presión con futuros en <strong style="color:var(--red)">-0.77%</strong>, arrastrados por la guerra en Irán, el petróleo cerca de máximos históricos (~$118) y un entorno macro hostil (Fed en pausa, inflación persistente, cuatro semanas consecutivas de pérdidas). El mercado distribuyó el viernes con una barra de 7,232 contratos cerrando en mínimos — eso es dinero institucional saliendo mientras el retail compraba el rally. VIX en 31, put/call en 1.6, institucionales netos cortos. El precio está en premium extremo tras el BOS del PDH. Todo apunta a corrección hacia <strong style="color:var(--yellow)">24,033–24,086</strong>.
+      <br><br>
+      <strong>PERO:</strong> Powell habla a las 10:30 y puede cambiar todo. Si no es explícitamente dovish, el mercado cae. Si sorprende dovish, tendremos squeeze de cortos. Mi recomendación: no entrar largo arriba de 24,100. Si quieres corto, espera rechazo en 24,162 post-Powell. Si quieres largo, espera que el precio llegue a 24,033–24,086 con confirmación VSA alcista. Stop para cualquier largo debajo de 24,001 — si se pierde ese nivel, el conteo de Elliott es incorrecto y vamos a 23,800.
     </p>
+    <div class="exec-alert" id="execAlert">
+      ⚠️ <strong>Vigilar:</strong> Powell speech 10:30 AM ET — primeros comentarios públicos post-FOMC. El mercado busca cualquier señal sobre cómo la Fed ve el oil shock vs. labor market. Tono hawkish → NQ se desploma. Tono dovish → rally de alivio. &nbsp;|&nbsp; <strong>Kill Zone:</strong> NY Open 9:30–10:00 AM para posición inicial, pero el movimiento real viene post-Powell 10:30–11:00 AM. Evitar entradas entre 10:15–10:45 AM hasta digerir comentarios.
+    </div>
   </div>
 
+  <div class="indicators">
+    <div class="ind-card">
+      <div class="ind-label">VIX</div>
+      <div class="ind-value yellow" id="vixVal">30.90</div>
+      <div class="ind-change" id="vixNote">⚠️ ELEVADO — sizing reducido</div>
+    </div>
+    <div class="ind-card">
+      <div class="ind-label">Petróleo Brent</div>
+      <div class="ind-value orange" id="brentVal">$118.00</div>
+      <div class="ind-change" id="brentNote">▲ +0.8% — Hormuz cerrado</div>
+    </div>
+    <div class="ind-card">
+      <div class="ind-label">Yield 10Y</div>
+      <div class="ind-value" style="color:#88aaff" id="yieldVal">4.44%</div>
+      <div class="ind-change" id="yieldNote">→ Sin cambio — Fed en pausa</div>
+    </div>
+    <div class="ind-card">
+      <div class="ind-label">DXY</div>
+      <div class="ind-value" style="color:var(--dim)" id="dxyVal">100.26</div>
+      <div class="ind-change" id="dxyNote">▼ Débil — presión en tech</div>
+    </div>
+  </div>
+
+  <div class="scenarios">
+    <div class="scenario-card principal">
+      <div class="scenario-header">Escenario Principal</div>
+      <div class="scenario-prob green" id="probPrincipal">70%</div>
+      <div class="scenario-text" id="scenarioPrincipal">
+        Corrección hacia zona <strong style="color:var(--yellow)">24,033–24,086</strong> durante la sesión NY. El upthrust del viernes con 7,232 contratos de distribución necesita seguimiento bajista. Powell a las 10:30 será el catalizador — cualquier comentario que no sea explícitamente dovish provocará venta adicional. El mercado buscará el SSL en 24,033 donde están los stops de los que compraron el rally del viernes. El FVG en 24,086 actuará como primer soporte técnico pero probablemente ceda hasta el OB alcista en 24,033.
+      </div>
+      <div class="scenario-catalyst"><strong>Catalizador:</strong> Powell speech 10:30 AM ET sin sesso dovish claro → continuación de distribución institucional</div>
+      <div class="scenario-target" id="targetPrincipal">🎯 Objetivo: 24,034</div>
+    </div>
+    <div class="scenario-card alternativo">
+      <div class="scenario-header">Escenario Alternativo</div>
+      <div class="scenario-prob red" id="probAlternativo">30%</div>
+      <div class="scenario-text" id="scenarioAlternativo">
+        Rally de cobertura de cortos si Powell sorprende con tono muy dovish mencionando preocupación por crecimiento y disposición a pausar o recortar. Los futuros premarket están verdes por optimismo Irán — si Powell añade combustible, podríamos ver squeeze hacia 24,178 (BSL) y potencialmente 24,400. Pero sería rally en mercado débil, no cambio de tendencia.
+      </div>
+      <div class="scenario-catalyst"><strong>Catalizador:</strong> Powell explícitamente dovish + resolución positiva Irán + VIX cayendo bajo 28</div>
+      <div class="scenario-target" style="border-color:rgba(255,68,68,0.3);color:var(--red)" id="targetAlternativo">🎯 Objetivo: 24,400</div>
+    </div>
+  </div>
+
+  <div class="panels-3">
+
+    <div class="panel">
+      <div class="panel-header">📐 Niveles Accionables</div>
+      <div class="panel-body">
+        <div class="level-row"><span class="level-label">🔴 Resistencia 2</span><span class="level-value red" id="res2">25,200</span></div>
+        <div class="level-row"><span class="level-label">🔴 Resistencia 1</span><span class="level-value red" id="res1">25,025</span></div>
+        <div class="level-row"><span class="level-label" style="color:var(--yellow)">📍 Precio Actual</span><span class="level-value yellow" id="currentLevelDisplay">~24,750</span></div>
+        <div class="level-row"><span class="level-label">🟡 BSL / Objetivo Alt.</span><span class="level-value yellow" id="bsl">24,178</span></div>
+        <div class="level-row"><span class="level-label">🟢 FVG / OB Alcista</span><span class="level-value green" id="fvg">24,086</span></div>
+        <div class="level-row"><span class="level-label">🟢 SSL / Objetivo Princ.</span><span class="level-value green" id="ssl">24,033</span></div>
+        <div class="level-row"><span class="level-label">⛔ Stop Crítico</span><span class="level-value red" id="stopCrit">24,001</span></div>
+        <div class="level-zone zone-buy">
+          <span style="color:var(--green)">📈 Zona Compra</span>
+          <span class="level-value green" id="zonaCompra">24,034</span>
+        </div>
+        <div class="level-zone zone-sell" style="margin-top:6px">
+          <span style="color:var(--red)">📉 Zona Venta</span>
+          <span class="level-value red" id="zonaVenta">24,162</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">〰️ Elliott Wave + ICT</div>
+      <div class="panel-body">
+        <div class="analysis-row"><span class="analysis-label">Onda Diario</span><span class="analysis-value red" id="ondaDiario">onda 3 del ciclo primario</span></div>
+        <div class="analysis-row"><span class="analysis-label">Sub-onda 60min</span><span class="analysis-value red" id="ondaH1">sub-onda v, grado intermedio</span></div>
+        <div class="analysis-row"><span class="analysis-label">Agotamiento onda</span><span class="analysis-value yellow" id="agotamiento">SÍ</span></div>
+        <div class="analysis-row"><span class="analysis-label">BOS</span><span class="analysis-value red" id="bosVal">Bajista — PDH roto</span></div>
+        <div class="analysis-row"><span class="analysis-label">FVG activo</span><span class="analysis-value green" id="fvgIct">24,086 — bearish</span></div>
+        <div class="analysis-row"><span class="analysis-label">OB relevante</span><span class="analysis-value green" id="obIct">24,033 — mitigation</span></div>
+        <div class="analysis-row"><span class="analysis-label">SSL / BSL</span><span class="analysis-value" id="sslBsl">24,033 / 24,178</span></div>
+        <div class="analysis-row"><span class="analysis-label">Premium/Discount</span><span class="analysis-value red" id="premDisc">Premium extremo</span></div>
+        <div class="analysis-row"><span class="analysis-label">Kill Zone</span><span class="analysis-value yellow" id="killZone">NY 9:30–10:00 AM ET</span></div>
+        <div class="analysis-row"><span class="analysis-label">Sesgo HTF</span><span class="analysis-value red" id="sesgoBias">Bajista — marcos alineados</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">📊 VSA — Wyckoff</div>
+      <div class="panel-body">
+        <div class="analysis-row"><span class="analysis-label">Fase Wyckoff</span><span class="analysis-value red" id="wyckoffFase">Distribución</span></div>
+        <div class="analysis-row"><span class="analysis-label">Señal VSA</span><span class="analysis-value red" id="vsaSignal">Upthrust</span></div>
+        <div class="analysis-row"><span class="analysis-label">Presión 5min</span><span class="analysis-value red" id="presion5">VENDEDORA</span></div>
+        <div class="analysis-row"><span class="analysis-label">Vol. viernes</span><span class="analysis-value red" id="volViernes">7,232 contratos</span></div>
+        <div class="analysis-row"><span class="analysis-label">Put/Call ratio</span><span class="analysis-value red" id="putCall">1.6 — bajista</span></div>
+        <div class="analysis-row"><span class="analysis-label">Inst. netos</span><span class="analysis-value red" id="instNetos">Cortos</span></div>
+        <div class="analysis-row"><span class="analysis-label">Retail posición</span><span class="analysis-value yellow" id="retailPos">Largos — contrarian</span></div>
+        <div class="analysis-row"><span class="analysis-label">AAII Bears/Bulls</span><span class="analysis-value red" id="sentAaii">52% / 30.4%</span></div>
+        <div class="analysis-row"><span class="analysis-label">POVM</span><span class="analysis-value red" id="povm">Distribución en rally</span></div>
+        <div class="analysis-row"><span class="analysis-label">Fuerza relativa</span><span class="analysis-value red" id="fuerzaRel">NQ &lt; ES &lt; DJI</span></div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<!-- FOOTER -->
 <div class="footer">
-  <span>NQ TERMINAL</span> · Futuros Nasdaq 100 · Sesión Nueva York · Actualizado automáticamente cada mañana
+  <span>NQ TERMINAL</span> · Futuros Nasdaq 100 · Sesión Nueva York ·
+  Precio actualizado en tiempo real · Análisis generado por IA cada mañana
   &nbsp;|&nbsp; No es asesoría financiera · Trading implica riesgo de pérdida
 </div>
 
+<script>
+// ============================================
+// LIVE PRICE — NQ Futures (/NQ)
+// ============================================
+const REPORT_PRICE = 24750;
+const REPORT_CHANGE = -193;
+const REPORT_CHANGE_PCT = -0.77;
+
+function fmt(p) { return p.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+
+function setPrice(price, change, changePct, source) {
+  const el = document.getElementById('livePrice');
+  el.textContent = fmt(price);
+  el.className = 'live-price ' + (change >= 0 ? 'up' : 'down');
+  const sign = change >= 0 ? '+' : '';
+  const chEl = document.getElementById('priceChange');
+  chEl.textContent = sign + fmt(change) + ' (' + sign + changePct.toFixed(2) + '%)';
+  chEl.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('lastPriceSmall').textContent = fmt(price);
+  document.getElementById('lastPriceSmall').style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('currentLevelDisplay').textContent = fmt(price);
+  document.getElementById('currentLevelDisplay').className = 'level-value ' + (change >= 0 ? 'green' : 'yellow');
+  const now = new Date();
+  const et = new Date(now.toLocaleString('en-US', {timeZone: 'America/New_York'}));
+  const h = et.getHours().toString().padStart(2,'0');
+  const m = et.getMinutes().toString().padStart(2,'0');
+  document.getElementById('priceStatus').textContent = source + ' · ' + h + ':' + m + ' ET';
+}
+
+async function fetchPrice() {
+  // Intento 1: Yahoo Finance via allorigins
+  try {
+    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/NQ%3DF?interval=1m&range=1d';
+    const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url), {signal: AbortSignal.timeout(8000)});
+    const j = await r.json();
+    const d = JSON.parse(j.contents);
+    const meta = d.chart.result[0].meta;
+    const price = meta.regularMarketPrice;
+    const prev = meta.chartPreviousClose || meta.previousClose;
+    if (price > 1000 && prev > 0) {
+      setPrice(price, price - prev, ((price - prev) / prev) * 100, 'Live');
+      return;
+    }
+  } catch(e) {}
+
+  // Intento 2: Stooq via allorigins
+  try {
+    const stooq = 'https://stooq.com/q/l/?s=nq.f&f=sd2t2ohlcvn&h&e=csv';
+    const r2 = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(stooq), {signal: AbortSignal.timeout(8000)});
+    const j2 = await r2.json();
+    const lines = j2.contents.trim().split('\n');
+    if (lines.length >= 2) {
+      const p = lines[1].split(',');
+      const close = parseFloat(p[5]);
+      const open = parseFloat(p[3]);
+      if (close > 1000) {
+        setPrice(close, close - open, ((close - open) / open) * 100, 'Stooq');
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Fallback: precio del reporte
+  setPrice(REPORT_PRICE, REPORT_CHANGE, REPORT_CHANGE_PCT, 'Reporte');
+}
+
+fetchPrice();
+setInterval(fetchPrice, 30000); // actualizar cada 30 segundos
+</script>
 </body>
 </html>
